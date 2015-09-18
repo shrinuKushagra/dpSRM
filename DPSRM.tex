@@ -1,0 +1,134 @@
+\documentclass[a4paper]{article}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{amsmath,amssymb,amstext}
+\usepackage{amsthm}
+\usepackage{bbm}
+\usepackage[margin=1in]{geometry}
+
+\newenvironment{solution}{\begin{proof}[Solution]}{\end{proof}}
+\DeclareMathOperator{\sign}{sign}
+\DeclareMathOperator{\vcdim}{VCDim}
+\DeclareMathOperator{\rows}{rows}
+
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+% Definition Styles
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\begin{document}
+%\setlength{\abovedisplayskip}{0pt}
+%\setlength{\belowdisplayskip}{2pt}
+
+\section{Differentially Private Structural Risk Minimization}
+
+\begin{definition}[$\alpha$-Differential Privacy]
+A randomized function $K$ gives $α$-differential privacy if for all data sets $S$ and $S'$ differing on at most one element, and all $T \subseteq Range(K)$
+$$Pr [K(S) \in T] \le \exp(\alpha) Pr [K(S') \in T]$$
+\end{definition}
+
+\begin{definition}[Private Non-uniform learnability] A hypothesis class $H$ is privately non-uniformly learnable with respect to a domain set $Z$ and a loss function $l: H \times Z \rightarrow R^+$ , if there exists a function $m_H: (0, 1)^3\times H \rightarrow N$ and a learning algorithm with the following properties
+\begin{itemize}[nolistsep,noitemsep]
+\item For every $\alpha, \epsilon, \delta \in (0, 1)$ and for every $h \in H$, if $m \ge m_H(\alpha, \epsilon, \delta, h)$, then for every distribution $D$ over $Z$, with probability of at least $1-\delta$ (over the choice of the m training examples and over the random choices of A),
+$$L_D(A(S)) \le L_D(h) + \epsilon$$
+\item A is $\alpha$-differentially private. For all $h \in H$ and for all $S, S'$ which differ in only one element
+$$Pr [A(S) = h] \le \exp(\alpha) Pr [A(S') = h]$$
+where the probability is taken over the random choices of A.
+\end{itemize}
+\end{definition}
+
+\noindent For standard (non-private) non-uniform learnability, it is known that if $H = \cup_{n\in \mathbb{N}} H_n$, where each $H_n$ is agnostically PAC Learnable, then $H$ is non-uniformly learnable. The objective is to obtain a similar result for the private case as well. Note that in the private case, a known result is that $H_n$ is agnostically privately PAC learnable only if it is finite. It is also known that $\vcdim$ is not a characterization private PAC Learnability. Hence, we wish to show that if $H = \cup_{n \in \mathbb{N}}H_n$ where each $H_n$ is finite, then $H$ is privately non-uniformly learnable.
+
+\begin{definition}
+Denote by $\epsilon_n(m,\delta)$ the minimum $\epsilon$ such that $H_n$ has uniform convergence over samples of size $m$.
+\begin{align}
+\epsilon_n (m, \delta) = \min \{\epsilon \in (0,1) : m \ge m_{H_n}^{UC}(\epsilon, \delta)\}.\label{eqn:epsn}
+\end{align}
+Note that for finite $H_n$, we know that $\epsilon_n(m, \delta) = \sqrt{\frac{1}{2m}\Big(\log|H_n| + \log (2/\delta)}\Big)$.
+\end{definition}
+
+\begin{lemma}[needs citation]
+\label{lemma:allhuc}
+Let $w : N \rightarrow [0, 1]$ be a function such that $\sum_{n=1}^{\infty} w(n) \le 1$. Let H be a hypothesis class that can be written as $H = \cup_{n\in \mathbb{N}} H_n$ , where for each n, $H_n$ satisfies the uniform convergence property with a sample complexity function $m^{UC}_{H_n}$ . Let $\epsilon_n$ be as defined in Eqn. \ref{eqn:epsn}. Then, for every $\epsilon, \delta \in (0, 1)$ and distribution $D$, with probability of at least $1 - \delta$ over the choice of $S \sim D_m$ , the following bound holds (simultaneously) for every $n \in \mathbb{N}$ and $h \in H_n$.
+$$|L_D(h) - L_S(h)| \le \epsilon_n (m, w(n)·\cdot \delta). $$
+\end{lemma}
+
+\begin{definition}
+Let $H = \cup_{n \in \mathbb{N}}H_n$. Denote by $n(h)$ the minimum index of the hypothesis class in which $H$ lies.
+$$n(h) = \min\{n : h \in H_n\}.$$
+\end{definition}
+
+\begin{lemma}
+Let $H = \cup_{n \in \mathbb{N}} H_n$ where $|H_n| \le M$. Let $w : \mathbb{N} \rightarrow [0,1]$ be such that $\sum_{n \in \mathbb{N}} w(n) = 1$. Let the mechanism $A$ be such that it outputs $h$ with probability proportional to $\frac{w(n(h))}{|H_{n(h)}|}\cdot\exp(-\alpha m/2(L_S(h) + \epsilon_{n(h)}(m, w(n(h))\cdot\delta)))$. Then, $A$ is $\alpha$-differentially private.
+\end{lemma}
+\begin{proof}
+$$\mathbb{P}[A(S) = h] = \frac{\frac{w(n(h))}{|H_{n(h)}|}\exp(\frac{-\alpha m}{2}(L_S(h) + \epsilon_{n(h)}(m, w(n(h))\cdot\delta)))}{\sum_{h' \in H} \frac{w(n(h'))}{|H_{n(h')}|})\exp(\frac{-\alpha m}{2}(L_S(h') + \epsilon_{n(h')}(m, w(n(h'))\cdot\delta)))} = \exp(\alpha) \mathbb{P}[A(S') = h]$$
+The mechanism is a slight variant of the exponential mechanism where we have an extra $w(n(h))/|H_{n(h)}|$ multiplicative term. This is needed to ensure that the denominator is bounded.
+\end{proof} 
+
+\begin{proof}
+We need to upper bound $\mathbb{P}[S : L_D (A(S)) > L_D (h) + \epsilon$ where the probability is over the sample $S$ generated by $D^m$ and over randomness in $A$. Now, there are two possibilities. Either for all $h \in H$, $|L_D(h) - L_S(h)| \le \epsilon_{n(h)}(m, w(n(h))\cdot\delta/2)$ or there exists some $h$ for which this does not hold. From Lemma \ref{lemma:allhuc}, we know that the probability of the latter event is bounded by $\delta/2$. Let us consider the probability of $L_D(A(S)) > L_D(h)+\epsilon$ in the former case.
+
+\begin{flalign*}
+&\mathbb{P}[L_D(A(S)) > L_D(h) + \epsilon \text{ and } \forall h', |L_D(h')-L_S(h')| \le \epsilon_{n(h')}(m, w(n(h'))\cdot\delta)]&\\
+&=\sum_{n \in \mathbb{N}}\sum_{\hat{h} \in H_n} \mathbb{P}[A(S) = \hat{h} \text{ and } L_D(\hat{h}) > L_D(h) + \epsilon \text{ and } \forall h', |L_D(h')-L_S(h')| \le \epsilon_{n(h')}(m, w(n(h'))\cdot\delta)]&\\
+&\le \sum_{n \in \mathbb{N}}\sum_{\hat{h} \in H_n} \frac{\frac{w(n)}{|H_n|}\exp(\frac{-\alpha m}{2}(L_S(\hat{h}) + \epsilon_n(m, w(n)\cdot\delta)))}{\sum_{h' \in H} \frac{w(n(h'))}{|H_{n(h')}|})\exp(\frac{-\alpha m}{2}(L_S(h') + \epsilon_{n(h')}(m, w(n(h'))\cdot\delta)))}&\\
+&\le \sum_{n \in \mathbb{N}}\sum_{\hat{h} \in H_n} \frac{\frac{w(n)}{|H_n|}\exp(\frac{-\alpha m}{2}(L_S(\hat{h}) + \epsilon_n(m, w(n)\cdot\delta)))}{\frac{w(n(h))}{|H_{n(h)}|})\exp(\frac{-\alpha m}{2}(L_S(h) + \epsilon_{n(h)}(m, w(n(h))\cdot\delta)))}
+\end{flalign*}
+For brevity of notation, denote $\epsilon_{\hat{h}} := \epsilon_n(m, w(n)\cdot\delta)))$ and $\epsilon_{h} := \epsilon_{n(h)}(m, w(n(h))\cdot\delta)))$. Then,
+\begin{flalign*}
+&\le \sum_{n \in \mathbb{N}}\sum_{\hat{h} \in H_n}\frac{w(n(\hat{h})) |H_{n(h)}|}{w(n(h)) |H_{n(\hat{h})}|} \exp\Big(\frac{-\alpha m}{2}(L_S(\hat{h})-L_S(h) + \epsilon_{\hat{h}}-\epsilon_{h}\Big)&\\
+&\le \sum_{n \in \mathbb{N}}\sum_{\hat{h} \in H_n}\frac{w(n(\hat{h})) |H_{n(h)}|}{w(n(h)) |H_{n(\hat{h})}|} \exp\Big(\frac{-\alpha m}{2}(L_D(\hat{h})-L_D(h) - \epsilon_{\hat{h}}-\epsilon_{h} + \epsilon_{\hat{h}} - \epsilon_{h}\Big)&\\
+ &\le \sum_{n \in \mathbb{N}}\sum_{\hat{h} \in H_n}\frac{w(n(\hat{h})) |H_{n(h)}|}{w(n(h)) |H_{n(\hat{h})}|} \exp\Big(\frac{-\alpha m}{2}(\epsilon-2\epsilon_{h})\Big) \le \sum_{n \in \mathbb{N}}\frac{w(n) |H_{n(h)}|}{w(n(h))} \exp\Big(\frac{-\alpha m}{2}(\epsilon-2\epsilon_{h})\Big)&\\
+ &\le \frac{|H_{n(h)}|}{w(n(h))} \exp\Big(\frac{-\alpha m}{2}(\epsilon-2\epsilon_{n(h)}(m, w(n(h))\cdot \delta))\Big)&
+\end{flalign*}
+\end{proof}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
